@@ -36,3 +36,8 @@ jobs:
           code=$?
           if [ $code -eq 10 ]; then gh workflow disable ticket-watch; exit 0; fi
           exit $code
+      - name: Start the next run (keeps it going even if GitHub's timer is slow)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ticket-watch --ref main
