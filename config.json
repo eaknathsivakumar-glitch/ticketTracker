@@ -1,0 +1,76 @@
+{
+  "city": "chennai",
+  "targets": [
+    {
+      "name": "Godzilla Minus Zero - District",
+      "url": "https://www.district.in/movies/godzilla-minus-zero-movie-tickets-in-{city}-MV219297",
+      "open_keywords": [],
+      "require_text": []
+    },
+    {
+      "name": "Avengers Doomsday - District",
+      "url": "https://www.district.in/movies/avengers-doomsday-movie-tickets-in-{city}-MV176735",
+      "open_keywords": [],
+      "require_text": []
+    },
+    {
+      "name": "Dune Part Three - District",
+      "url": "https://www.district.in/movies/dune-part-three-movie-tickets-in-{city}-MV207332",
+      "open_keywords": [],
+      "require_text": []
+    },
+    {
+      "name": "Om Chapter 1 - District",
+      "url": "https://www.district.in/movies/om-chapter-1-udhiram-the-blood-wood-movie-tickets-in-{city}-MV225928",
+      "open_keywords": [],
+      "require_text": []
+    },
+    {
+      "name": "Aakasamlo Oka Tara - District",
+      "url": "https://www.district.in/movies/aakasamlo-oka-tara-movie-tickets-in-{city}-MV203295",
+      "open_keywords": [],
+      "require_text": []
+    }
+  ],
+  "heartbeat_hour_ist": 9,
+  "theatres": [
+    {
+      "match": "vettri",
+      "movies": "*"
+    },
+    {
+      "match": "cinepolis",
+      "movies": "*"
+    },
+    {
+      "match": "phoenix",
+      "movies": [
+        "godzilla",
+        "om chapter"
+      ]
+    },
+    {
+      "match": "phoenix",
+      "imax": true,
+      "movies": [
+        "doomsday",
+        "dune"
+      ]
+    },
+    {
+      "match": "palazzo",
+      "imax": true,
+      "movies": [
+        "godzilla",
+        "doomsday",
+        "dune"
+      ]
+    },
+    {
+      "match": "Bharat",
+      "movies": [
+        "om chapter 1"
+      ]
+    }
+  ]
+}

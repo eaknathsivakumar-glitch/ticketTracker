@@ -1,0 +1,38 @@
+name: ticket-watch
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # every 5 min (GitHub minimum; may be delayed a few min)
+  workflow_dispatch:
+permissions:
+  actions: write
+  contents: read
+concurrency:
+  group: ticket-watch
+  cancel-in-progress: false
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .state.json
+            dynamic.json
+          key: state-${{ github.run_id }}
+          restore-keys: state-
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install playwright && playwright install --with-deps chromium
+      - name: Run watcher
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          python watcher.py --listen 150
+          code=$?
+          if [ $code -eq 10 ]; then gh workflow disable ticket-watch; exit 0; fi
+          exit $code
