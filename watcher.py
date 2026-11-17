@@ -21,7 +21,12 @@ def send(msg):
     if not tok or not chat:
         print("[no telegram creds] " + msg); return
     data = urllib.parse.urlencode({"chat_id": chat, "text": msg, "disable_web_page_preview": "true"}).encode()
-    urllib.request.urlopen(f"https://api.telegram.org/bot{tok}/sendMessage", data, timeout=20).read()
+    for attempt in range(3):   # retry network blips so an alert is never lost
+        try:
+            urllib.request.urlopen(f"https://api.telegram.org/bot{tok}/sendMessage", data, timeout=20).read(); return
+        except Exception as e:
+            if attempt == 2: print("send failed:", e)
+            else: import time; time.sleep(2)
 
 
 def load_state():

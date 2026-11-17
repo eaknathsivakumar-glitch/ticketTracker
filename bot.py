@@ -5,9 +5,16 @@ CITIES = ["Chennai", "Bengaluru", "Mumbai", "Delhi NCR", "Hyderabad", "Kolkata",
 
 
 def tg(method, **p):
-    req = urllib.request.Request(f"https://api.telegram.org/bot{os.environ['TELEGRAM_TOKEN']}/{method}",
-                                 json.dumps(p).encode(), {"Content-Type": "application/json"})
-    return json.loads(urllib.request.urlopen(req, timeout=70).read())
+    import time
+    for attempt in range(3):   # retry network blips (not HTTP errors like 400)
+        req = urllib.request.Request(f"https://api.telegram.org/bot{os.environ['TELEGRAM_TOKEN']}/{method}",
+                                     json.dumps(p).encode(), {"Content-Type": "application/json"})
+        try:
+            return json.loads(urllib.request.urlopen(req, timeout=70).read())
+        except urllib.error.HTTPError: raise
+        except Exception:
+            if attempt == 2: raise
+            time.sleep(2)
 
 
 def kb(rows): return {"inline_keyboard": [[{"text": t, "callback_data": d} for t, d in r] for r in rows]}
