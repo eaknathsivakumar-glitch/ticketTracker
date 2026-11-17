@@ -142,12 +142,11 @@ def process_updates(cfg, dyn, chat, handle_text, timeout=0):
         print("getUpdates failed:", e); return False, 0
     changed = False
     for u in r.get("result", []):
-        dyn["_offset"] = u["update_id"] + 1
         try:
             cb = u.get("callback_query")
             if cb:
                 m = cb["message"]
-                if str(m["chat"]["id"]) != chat: continue
+                if str(m["chat"]["id"]) != chat: dyn["_offset"] = u["update_id"] + 1; continue
                 if cb["data"] == "refresh":
                     dyn["_recheck"] = m["message_id"]
                     try: tg("editMessageText", chat_id=chat, message_id=m["message_id"], text="🔄 Checking District now… (about 30 seconds)")
@@ -155,6 +154,7 @@ def process_updates(cfg, dyn, chat, handle_text, timeout=0):
                     try: tg("answerCallbackQuery", callback_query_id=cb["id"])
                     except Exception: pass
                     changed = True
+                    dyn["_offset"] = u["update_id"] + 1
                     continue
                 ch, (txt, mk) = on_callback(cb["data"], cfg, dyn, handle_text); changed |= ch
                 note = None
@@ -166,14 +166,19 @@ def process_updates(cfg, dyn, chat, handle_text, timeout=0):
                 except Exception as e: print("edit failed:", e)
                 try: tg("answerCallbackQuery", callback_query_id=cb["id"], **({"text": note} if note else {}))
                 except Exception: pass
+                dyn["_offset"] = u["update_id"] + 1
                 continue
             m = u.get("message") or {}
-            if str(m.get("chat", {}).get("id")) != chat: continue
             text = (m.get("text") or "").strip()
-            if not text: continue
+            if str(m.get("chat", {}).get("id")) != chat or not text:
+                dyn["_offset"] = u["update_id"] + 1; continue
             ch, screen, reply = on_text(text, cfg, dyn, handle_text); changed |= ch
             if reply: tg("sendMessage", chat_id=chat, text=reply)
             if screen: tg("sendMessage", chat_id=chat, text=screen[0], reply_markup=screen[1])
+            dyn["_offset"] = u["update_id"] + 1
+        except (urllib.error.URLError, ConnectionError, TimeoutError, OSError) as e:
+            print("network error, will retry this update next time:", e)
+            break   # keep the offset so the message is handled on the next run
         except Exception as e:
-            print("update error:", e)
+            print("update error:", e); dyn["_offset"] = u["update_id"] + 1   # real bug: skip it, don't loop
     return changed, len(r.get("result", []))
