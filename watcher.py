@@ -99,7 +99,10 @@ def fetch_page(url, debug=False):
                 slug = "".join(c if c.isalnum() else "_" for c in url.split("/")[-1])[:60]
                 page.screenshot(path=str(d / f"{slug}.png"), full_page=True); (d / f"{slug}.txt").write_text(text)
             b.close()
-        if len(text) < 200 or any(h in text.lower() for h in BLOCK_HINTS): return {"status": "blocked"}
+        hint = next((h for h in BLOCK_HINTS if h in text.lower()[:1500]), None)   # block pages are short; ignore stray words deep in a real page
+        if len(text) < 200 or hint:
+            print(f"BLOCKED {url.split('/')[-1]}: {'text only ' + str(len(text)) + ' chars' if len(text) < 200 else 'found ' + repr(hint)} | page starts: {text[:150]!r}")
+            return {"status": "blocked"}
         data = parse_page(text, anchors, url)
         if debug:
             print(f"--- {url}\n  banner={data['banner']} langs={data['langs']}")
@@ -283,6 +286,12 @@ def process_commands(dyn, timeout=0):
     return changed
 
 
+def heartbeat(base, dyn, state, now):
+    hb = base.get("heartbeat_hour_ist"); today = now.strftime("%Y-%m-%d")
+    if hb is not None and now.hour == hb and state.get("hb") != today:
+        bot.send(dyn["_owner"], "💓 Ticket watcher still running."); state["hb"] = today
+
+
 def main():
     args = sys.argv[1:]
     if "--set-menu" in args:
@@ -297,9 +306,7 @@ def main():
     process_commands(dyn)
     state = load_state()
     now = run_checks(dyn, state, "--debug" in args)
-    hb = base.get("heartbeat_hour_ist"); today = now.strftime("%Y-%m-%d")
-    if hb is not None and now.hour == hb and state.get("hb") != today:
-        bot.send(dyn["_owner"], "💓 Ticket watcher still running."); state["hb"] = today
+    heartbeat(base, dyn, state, now)
     save_state(state); finish_rechecks(dyn); save_dyn(dyn)
     if "--listen" in args:   # stay alive to answer button taps quickly
         end = time.time() + int(args[args.index("--listen") + 1])
